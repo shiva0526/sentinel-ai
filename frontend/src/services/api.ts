@@ -19,6 +19,7 @@ const apiClient = axios.create({
 
 export interface HuntRequest {
   repo_url: string;
+  email?: string;
   scan_mode?: string;
 }
 
@@ -46,8 +47,8 @@ export interface HealthResponse {
 /**
  * Trigger the full SentinelAI pipeline.
  */
-export async function launchHunt(repoUrl: string, scanMode: string = "auto"): Promise<HuntResponse> {
-  const response = await apiClient.post<HuntResponse>('/hunt', { repo_url: repoUrl, scan_mode: scanMode });
+export async function launchHunt(repoUrl: string, scanMode: string = "auto", email: string = ""): Promise<HuntResponse> {
+  const response = await apiClient.post<HuntResponse>('/hunt', { repo_url: repoUrl, email: email || undefined, scan_mode: scanMode });
   return response.data;
 }
 

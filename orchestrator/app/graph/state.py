@@ -7,6 +7,7 @@ from typing import TypedDict, Optional, List, Dict, Any
 
 class WarRoomState(TypedDict):
     repo_url: str
+    email: Optional[str]
     scan_mode: Optional[str]
     adaptive_mode: Optional[str]
     repo_stats: Optional[Dict[str, Any]]

@@ -4,11 +4,12 @@ import { Input } from '@/components/ui/input';
 import { StatusCard } from '@/components/ui/status-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Terminal from '@/components/shared/terminal/terminal';
-import { Shield, AlertTriangle, CheckCircle, Terminal as TerminalIcon, GitPullRequest, Zap } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, Terminal as TerminalIcon, GitPullRequest, Zap, Mail } from 'lucide-react';
 import { launchHunt } from '@/services/api';
 
 function Dashboard() {
   const [repoUrl, setRepoUrl] = useState('');
+  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [vulnerability, setVulnerability] = useState<string | null>(null);
@@ -27,6 +28,7 @@ function Dashboard() {
       '🚀 Initializing SentinelAI...',
       `🎯 Target: ${repoUrl}`,
       `⚙️  Scan Mode: ${scanMode}`,
+      ...(email ? [`📧 Notifications: ${email}`] : []),
       '🕵️  [0] Hunter Agent: Scanning target repository...',
     ]);
     setVulnerability(null);
@@ -38,7 +40,7 @@ function Dashboard() {
     setPatchedFiles(0);
     
     try {
-      const data = await launchHunt(repoUrl, scanMode);
+      const data = await launchHunt(repoUrl, scanMode, email);
       
       if (data.status === 'failed') {
         setLogs(prev => [...prev, `❌ Scan Failed: ${data.error || 'Unknown error'}`]);
@@ -62,7 +64,8 @@ function Dashboard() {
           ...prev,
           `📊 Repo: ${data.repo_stats?.file_count} files, ${data.repo_stats?.total_lines} LOC`,
           `🔍 Mode selected: Detection Only`,
-          `✅ Scan Complete! Found ${data.total_vulnerabilities} vulnerabilities.`
+          `✅ Scan Complete! Found ${data.total_vulnerabilities} vulnerabilities.`,
+          ...(email ? ['📧 Email notification sent.'] : []),
         ]);
       } else {
         setVulnerability(data.vulnerability_found || null);
@@ -83,6 +86,7 @@ function Dashboard() {
             ? '✅ Patch held! Ready to deploy.' 
             : '❌ Patch failed! Exploit successful.',
           ...(data.pr_url ? [`🔗 PR Created: ${data.pr_url}`] : []),
+          ...(email ? ['📧 Email notification sent.'] : []),
         ]);
       }
       
@@ -147,6 +151,16 @@ function Dashboard() {
                 placeholder="Enter GitHub Repository URL"
                 className="flex-1"
               />
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email for notifications (optional)"
+                  className="pl-10 w-72"
+                />
+              </div>
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? 'Hunting...' : 'Launch SentinelAI'}
               </Button>

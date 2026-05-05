@@ -19,6 +19,9 @@ class Settings:
     HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", "8000"))
 
+    SMTP_EMAIL: str = os.getenv("SMTP_EMAIL", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+
     FALLBACK_MODELS: list = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
 
 
