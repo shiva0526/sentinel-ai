@@ -1,0 +1,30 @@
+# Environment & Secrets
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# Node
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+pipeline_output*.txt
+test_scratch.py
+test_pipeline.py
+
+# Build artifacts
+arena/arena.exe
