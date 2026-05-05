@@ -5,7 +5,7 @@ builder.py — Constructs and compiles the LangGraph workflow.
 from langgraph.graph import StateGraph, END
 
 from .state import WarRoomState
-from .edges import check_sandbox_results, check_approval
+from .edges import check_sandbox_results, check_approval, check_hunter_mode
 from ..agents.hunter import hunter_agent
 from ..agents.triage import triage_agent
 from ..agents.mechanic import mechanic_agent
@@ -36,7 +36,13 @@ def build_pipeline(checkpointer=None):
 
     # Define edges
     workflow.set_entry_point("Hunter")
-    workflow.add_edge("Hunter", "Triage")
+    
+    # Conditional: detect_only / auto / full
+    workflow.add_conditional_edges(
+        "Hunter",
+        check_hunter_mode,
+        {"end": "Cleanup", "triage": "Triage"},
+    )
     workflow.add_edge("Triage", "Mechanic")
     workflow.add_edge("Mechanic", "Hacker")
     workflow.add_edge("Hacker", "Validator")
