@@ -16,7 +16,7 @@ def search_web_for_cve(query: str) -> str:
     Use this tool when you need to confirm the severity, find the exact CVE ID, or research how a vulnerability is typically exploited.
     """
     try:
-        res = requests.post("http://localhost:8080/search", json={"query": query}, timeout=15)
+        res = requests.post("http://localhost:8081/search", json={"query": query}, timeout=15)
         return res.text
     except Exception as e:
         return f"Search failed: {e}"
@@ -29,7 +29,7 @@ _analyzer = VulnerabilityAnalyzer(verbose=False)
 # We will pass the Gemini client from graph.py into this agent
 def run_pentagi_hunter(state: Dict[str, Any], ai_client) -> Dict[str, Any]:
     repo_url = state.get("repo_url")
-    print(f"\n🎯 [0] PentAGI Hunter: Scanning target repository: {repo_url}")
+    print(f"\n[TARGET] [0] PentAGI Hunter: Scanning target repository: {repo_url}")
     
     # 1. Fetch the code (For simplicity, assuming a raw github file link is passed)
     # If it's a full repo, the AI would normally use a GitHub API tool here.
@@ -47,21 +47,21 @@ def get_user(username):
     cursor.execute(f"SELECT * FROM users WHERE username = '{username}'")
     return cursor.fetchall()
             """
-            print("   ⚠️ Not a raw file URL. Using simulated vulnerable code for testing.")
+            print("   [WARN] Not a raw file URL. Using simulated vulnerable code for testing.")
     except Exception as e:
         return {"test_status": "FAIL", "test_logs": f"Failed to fetch repo: {str(e)}"}
 
-    print("   ✅ Code fetched.")
+    print("   [OK] Code fetched.")
 
     # ══════════════════════════════════════════════════════════════════
     # 2. NEW: Run the rule-based detection engine FIRST (deterministic)
     # ══════════════════════════════════════════════════════════════════
-    print("   🔬 Running rule-based vulnerability detection engine...")
+    print("   [SCAN] Running rule-based vulnerability detection engine...")
     rule_findings = _analyzer.run(code_content)
 
     if rule_findings:
         # ── Rule engine found vulnerabilities — use structured data ──
-        print(f"   🎯 Rule engine detected {len(rule_findings)} vulnerability(ies)!")
+        print(f"   [HIT] Rule engine detected {len(rule_findings)} vulnerability(ies)!")
         for i, f in enumerate(rule_findings, 1):
             print(f"      [{i}] {f.vuln_type} ({f.confidence.value}) — {f.cwe} @ line {f.line}")
 
@@ -94,7 +94,7 @@ def get_user(username):
         """
 
         # 3. Send to LLM for validation (not blind guessing)
-        print("   🧠 Sending structured findings to AI for validation...")
+        print("   [AI] Sending structured findings to AI for validation...")
         chat = ai_client.chats.create(
             model="gemini-2.5-flash",
             config=types.GenerateContentConfig(
@@ -107,7 +107,7 @@ def get_user(username):
 
     else:
         # ── No rule-based findings — fall back to pure LLM scan ─────
-        print("   ℹ️ No rule-based findings. Falling back to AI-powered scan...")
+        print("   [INFO] No rule-based findings. Falling back to AI-powered scan...")
 
         hunter_prompt = f"""
         You are an elite, highly aggressive Application Security Researcher (Pentester).
@@ -133,7 +133,7 @@ def get_user(username):
             )
         )
         
-        print("   🧠 Analyzing code and checking web databases...")
+        print("   [AI] Analyzing code and checking web databases...")
         response = chat.send_message(hunter_prompt)
         result = response.text
 
@@ -144,7 +144,7 @@ def get_user(username):
     cve_id = cve_match.group(1).strip() if cve_match else "UNKNOWN-VULN"
     vulnerable_code = snippet_match.group(1).strip() if snippet_match else code_content
 
-    print(f"   🚨 BUG FOUND! Type: {cve_id}")
+    print(f"   [ALERT] BUG FOUND! Type: {cve_id}")
     
     # Pass the findings directly to SentinelAI's War Room!
     return {

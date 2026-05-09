@@ -134,8 +134,8 @@ func injectFileToContainer(ctx context.Context, cli *client.Client, containerID,
 func main() {
 	http.HandleFunc("/execute", executeInSandbox)
 	http.HandleFunc("/search", searchWeb)
-	fmt.Println("🛡️ SentinelAI Arena Engine running on http://localhost:8080 ...")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	fmt.Println("🛡️ SentinelAI Arena Engine running on http://localhost:8081 ...")
+	log.Fatal(http.ListenAndServe(":8081", nil))
 }
 
 // ==========================================

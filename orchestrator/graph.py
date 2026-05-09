@@ -34,11 +34,11 @@ def generate_with_fallback(ai_client, prompt: str) -> str:
     """Try each model in FALLBACK_MODELS. On 503 ServerError, fall to the next."""
     for model_name in FALLBACK_MODELS:
         try:
-            print(f"    ⚡ Trying {model_name}...")
+            print(f"    [*] Trying {model_name}...")
             response = ai_client.models.generate_content(model=model_name, contents=prompt)
             return response.text.strip()
         except genai_errors.ServerError as e:
-            print(f"    ⚠️  {model_name} unavailable (503), falling back...")
+            print(f"    [!] {model_name} unavailable (503), falling back...")
             continue
     raise RuntimeError("All Gemini models are currently unavailable. Please try again later.")
 
@@ -60,7 +60,7 @@ class WarRoomState(TypedDict):
 
 # 2. THE NODES (Agents)
 def triage_agent(state: WarRoomState):
-    print("\n🕵️  [1] Triage Agent: Fetching the vulnerable code...")
+    print("\n[TRIAGE] [1] Triage Agent: Fetching the vulnerable code...")
     # A classic SQL Injection vulnerability
     vuln_code = """
 def login(username, password):
@@ -70,13 +70,13 @@ def login(username, password):
     return {"original_code": vuln_code.strip()}
 
 def ast_agent(state: WarRoomState):
-    print("🗺️  [2] AST Agent: Mapping code blueprint...")
+    print("[AST] [2] AST Agent: Mapping code blueprint...")
     # Actually use our tool now!
     blueprint = generate_ast_blueprint(state["original_code"])
     return {"ast_graph": blueprint}
 
 def mechanic_agent(state: WarRoomState):
-    print("🔧 [3] Mechanic (Blue Team): AI is writing a secure patch...")
+    print("[BLUE] [3] Mechanic (Blue Team): AI is writing a secure patch...")
     
     # Check if we are on a retry because the Sandbox failed
     feedback = ""
@@ -114,7 +114,7 @@ def mechanic_agent(state: WarRoomState):
     return {"proposed_patch": patched_code}
 
 def hacker_agent(state: WarRoomState):
-    print("🥷  [4] Hacker (Red Team): AI is reverse-engineering the patch to write an exploit...")
+    print("[RED] [4] Hacker (Red Team): AI is reverse-engineering the patch to write an exploit...")
 
     prompt = f"""
     You are an expert Red Team Security Researcher. 
@@ -153,12 +153,12 @@ def hacker_agent(state: WarRoomState):
     return {"exploit_payload": exploit_payload}
 
 def validator_agent(state: WarRoomState):
-    print("⚖️  [5] Referee: Sending the Patch and Exploit to the Go Arena...")
+    print("[REFEREE] [5] Referee: Sending the Patch and Exploit to the Go Arena...")
     iters = state.get("iterations", 0) + 1
 
     try:
         # Fire the code over to your Go/Docker Sandbox
-        response = requests.post("http://localhost:8080/execute", json={
+        response = requests.post("http://localhost:8081/execute", json={
             "language": "python",
             "app_code": state['proposed_patch'],
             "exploit_payload": state['exploit_payload']
@@ -166,21 +166,21 @@ def validator_agent(state: WarRoomState):
         
         # Check if the Go server itself crashed
         if response.status_code != 200:
-            print(f"   ⚠️ Sandbox Error ({response.status_code}): {response.text}")
+            print(f"   [!] Sandbox Error ({response.status_code}): {response.text}")
             return {"test_status": "FAIL", "iterations": iters, "test_logs": f"Sandbox Error: {response.text}"}
             
         result = response.json()
         
         # Did the exploit crash the patched app?
         if result["success"]:
-            print("   ✅ Referee: The patch held! The Hacker failed to exploit it.")
+            print("   [PASS] Referee: The patch held! The Hacker failed to exploit it.")
             return {"test_status": "PASS", "iterations": iters, "test_logs": "Execution successful. No crash detected."}
         else:
-            print("   ❌ Referee: The Hacker broke the patch! Sending the crash logs back to the Blue Team.")
+            print("   [FAIL] Referee: The Hacker broke the patch! Sending the crash logs back to the Blue Team.")
             return {"test_status": "FAIL", "iterations": iters, "test_logs": result["error"]}
             
     except Exception as e:
-        print(f"   ⚠️ Failed to connect to Go Sandbox. Is it running? Error: {e}")
+        print(f"   [!] Failed to connect to Go Sandbox. Is it running? Error: {e}")
         return {"test_status": "FAIL", "iterations": iters, "test_logs": str(e)}
 
 # 3. CONDITIONAL ROUTING
@@ -229,7 +229,7 @@ fastapi_app.add_middleware(
 
 @fastapi_app.post("/hunt")
 def trigger_full_pipeline(request: HuntRequest):
-    print(f"🚀 SentinelAI initialized targeting: {request.repo_url}...")
+    print(f"[START] SentinelAI initialized targeting: {request.repo_url}...")
     
     initial_state = {
         "repo_url": request.repo_url,
@@ -248,7 +248,7 @@ def trigger_full_pipeline(request: HuntRequest):
         raise HTTPException(status_code=500, detail=f"Pipeline failed: {str(e)}")
 
 if __name__ == "__main__":
-    print("🚀 Starting SentinelAI Pipeline...\n")
+    print("[START] Starting SentinelAI Pipeline...\n")
     # For testing, we can run uvicorn locally
-    print("🛡️ Starting SentinelAI Microservice on port 8000...")
+    print("[SERVER] Starting SentinelAI Microservice on port 8000...")
     uvicorn.run(fastapi_app, host="0.0.0.0", port=8000)

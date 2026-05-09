@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { StatusCard } from '@/components/ui/status-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Terminal from '@/components/shared/terminal/terminal';
-import { Shield, AlertTriangle, CheckCircle, Terminal as TerminalIcon, GitPullRequest, Zap, Mail } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, Terminal as TerminalIcon, Zap, Mail } from 'lucide-react';
 import { launchHunt } from '@/services/api';
 
 function Dashboard() {
@@ -12,14 +12,10 @@ function Dashboard() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
-  const [vulnerability, setVulnerability] = useState<string | null>(null);
   const [testStatus, setTestStatus] = useState<string | null>(null);
-  const [scanMode, setScanMode] = useState<'auto' | 'full' | 'detect_only'>('auto');
   const [vulnerabilitiesList, setVulnerabilitiesList] = useState<any[]>([]);
   const [resolvedMode, setResolvedMode] = useState<string | null>(null);
   const [repoStats, setRepoStats] = useState<{ file_count: number; total_lines: number } | null>(null);
-  const [prUrl, setPrUrl] = useState<string | null>(null);
-  const [patchedFiles, setPatchedFiles] = useState<number>(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,20 +23,16 @@ function Dashboard() {
     setLogs([
       '🚀 Initializing SentinelAI...',
       `🎯 Target: ${repoUrl}`,
-      `⚙️  Scan Mode: ${scanMode}`,
       ...(email ? [`📧 Notifications: ${email}`] : []),
       '🕵️  [0] Hunter Agent: Scanning target repository...',
     ]);
-    setVulnerability(null);
     setTestStatus(null);
     setVulnerabilitiesList([]);
     setResolvedMode(null);
     setRepoStats(null);
-    setPrUrl(null);
-    setPatchedFiles(0);
     
     try {
-      const data = await launchHunt(repoUrl, scanMode, email);
+      const data = await launchHunt(repoUrl, 'auto', email);
       
       if (data.status === 'failed') {
         setLogs(prev => [...prev, `❌ Scan Failed: ${data.error || 'Unknown error'}`]);
@@ -105,45 +97,13 @@ function Dashboard() {
           <Shield className="w-12 h-12 text-primary" />
           <div>
             <h1 className="text-3xl font-bold tracking-tight">SentinelAI</h1>
-            <p className="text-muted-foreground">Autonomous Security Remediation Pipeline</p>
+            <p className="text-muted-foreground">Autonomous Security Scanning Pipeline</p>
           </div>
         </div>
 
         {/* Form */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex gap-4 mb-4 flex-wrap">
-              <label className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  value="auto" 
-                  checked={scanMode === 'auto'} 
-                  onChange={() => setScanMode('auto')} 
-                  className="text-primary accent-primary"
-                />
-                <span className="text-sm font-medium">Auto (Recommended)</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  value="full" 
-                  checked={scanMode === 'full'} 
-                  onChange={() => setScanMode('full')} 
-                  className="text-primary accent-primary"
-                />
-                <span className="text-sm font-medium">Full Pipeline</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  value="detect_only" 
-                  checked={scanMode === 'detect_only'} 
-                  onChange={() => setScanMode('detect_only')} 
-                  className="text-primary accent-primary"
-                />
-                <span className="text-sm font-medium">Detect Only</span>
-              </label>
-            </div>
             <form onSubmit={handleSubmit} className="flex gap-4">
               <Input 
                 value={repoUrl}
@@ -162,7 +122,7 @@ function Dashboard() {
                 />
               </div>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Hunting...' : 'Launch SentinelAI'}
+                {isLoading ? 'Scanning...' : 'Launch SentinelAI'}
               </Button>
             </form>
           </CardContent>
@@ -170,36 +130,31 @@ function Dashboard() {
 
         {/* Mode Decision Banner */}
         {resolvedMode && repoStats && (
-          <Card className={`border-l-4 ${resolvedMode === 'detect_only' ? 'border-l-yellow-500 bg-yellow-500/5' : 'border-l-blue-500 bg-blue-500/5'}`}>
+          <Card className="border-l-4 border-l-yellow-500 bg-yellow-500/5">
             <CardContent className="py-4 flex items-center space-x-4">
-              <Zap className={`w-6 h-6 ${resolvedMode === 'detect_only' ? 'text-yellow-500' : 'text-blue-500'}`} />
+              <Zap className="w-6 h-6 text-yellow-500" />
               <div>
-                <p className="font-semibold text-sm">
-                  Mode: {resolvedMode === 'detect_only' ? 'Detection Only' : 'Full Pipeline'}
-                </p>
+                <p className="font-semibold text-sm">Mode: Detection Only</p>
                 <p className="text-xs text-muted-foreground">
-                  {resolvedMode === 'detect_only'
-                    ? `Large repository (${repoStats.file_count} files, ${repoStats.total_lines.toLocaleString()} LOC) — scanning only`
-                    : `Small repository (${repoStats.file_count} files, ${repoStats.total_lines.toLocaleString()} LOC) — full remediation`
-                  }
+                  Repository scanned: {repoStats.file_count} files, {repoStats.total_lines.toLocaleString()} LOC
                 </p>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Grid for Status and Logs */}
+        {/* Status Cards + Terminal */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-4">
             <StatusCard 
-              title={vulnerability ? `Vulnerability: ${vulnerability}` : "Awaiting Target"}
+              title={vulnerabilitiesList.length > 0 ? `Found: ${vulnerabilitiesList.length} vulnerabilities` : "Awaiting Scan"}
               description="Hunter Agent Findings"
-              icon={<AlertTriangle className="w-8 h-8 text-yellow-500" />}
+              icon={<AlertTriangle className={`w-8 h-8 ${vulnerabilitiesList.length > 0 ? 'text-yellow-500' : 'text-muted-foreground'}`} />}
             />
             <StatusCard 
-              title={testStatus ? `Test: ${testStatus}` : "Awaiting Sandbox"}
-              description="Go Sandbox Verification"
-              icon={<CheckCircle className={`w-8 h-8 ${testStatus === 'PASS' ? 'text-green-500' : 'text-muted-foreground'}`} />}
+              title={testStatus === 'scan_complete' ? 'Scan Complete' : 'Awaiting Scan'}
+              description="Detection Engine Status"
+              icon={<CheckCircle className={`w-8 h-8 ${testStatus === 'scan_complete' ? 'text-green-500' : 'text-muted-foreground'}`} />}
             />
           </div>
 
@@ -218,31 +173,8 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Full Pipeline Result — PR Link */}
-        {resolvedMode === 'full' && prUrl && (
-          <Card className="border-border border-l-4 border-l-green-500 bg-green-500/5">
-            <CardContent className="py-4 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <GitPullRequest className="w-6 h-6 text-green-500" />
-                <div>
-                  <p className="font-semibold text-sm">Pull Request Created</p>
-                  <p className="text-xs text-muted-foreground">Patches Applied: {patchedFiles}</p>
-                </div>
-              </div>
-              <a 
-                href={prUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="px-4 py-2 text-sm font-medium bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors"
-              >
-                View Pull Request →
-              </a>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Scan Results Block for detect_only mode */}
-        {resolvedMode === 'detect_only' && testStatus === 'scan_complete' && (
+        {/* Vulnerability Results */}
+        {testStatus === 'scan_complete' && (
           vulnerabilitiesList.length > 0 ? (
             <Card className="border-border">
               <CardHeader>

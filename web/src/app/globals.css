@@ -1,0 +1,247 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+/* ─── Base ───────────────────────────────────────────────────── */
+:root {
+  --sentinel-green: #00ff9d;
+  --sentinel-red: #ff3e3e;
+  --sentinel-amber: #ffb800;
+  --sentinel-cyan: #00e5ff;
+  --sentinel-bg: #0a0e17;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e293b #0a0e17;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #0a0e17;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+
+body {
+  background: var(--sentinel-bg);
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* ─── Scan Line Overlay ──────────────────────────────────────── */
+.scan-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.scan-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--sentinel-green), transparent);
+  animation: scanLine 3s linear infinite;
+  opacity: 0.3;
+}
+
+/* ─── Grid Background ────────────────────────────────────────── */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(0, 255, 157, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 157, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ─── Glowing Card ───────────────────────────────────────────── */
+.glow-card {
+  background: linear-gradient(145deg, rgba(17, 24, 39, 0.9), rgba(13, 19, 33, 0.95));
+  border: 1px solid rgba(0, 255, 157, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.glow-card:hover {
+  border-color: rgba(0, 255, 157, 0.25);
+  box-shadow: 0 0 30px rgba(0, 255, 157, 0.05);
+}
+
+/* ─── Pipeline Step ──────────────────────────────────────────── */
+.pipeline-step {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pipeline-step.active {
+  border-color: var(--sentinel-amber) !important;
+  box-shadow: 0 0 20px rgba(255, 184, 0, 0.15);
+}
+
+.pipeline-step.completed {
+  border-color: var(--sentinel-green) !important;
+  box-shadow: 0 0 20px rgba(0, 255, 157, 0.1);
+}
+
+.pipeline-step.error {
+  border-color: var(--sentinel-red) !important;
+  box-shadow: 0 0 20px rgba(255, 62, 62, 0.15);
+}
+
+/* ─── Code Block ─────────────────────────────────────────────── */
+.code-block {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  tab-size: 4;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.code-vulnerable {
+  background: rgba(255, 62, 62, 0.06);
+  border: 1px solid rgba(255, 62, 62, 0.25);
+  border-left: 3px solid var(--sentinel-red);
+}
+
+.code-secure {
+  background: rgba(0, 255, 157, 0.04);
+  border: 1px solid rgba(0, 255, 157, 0.2);
+  border-left: 3px solid var(--sentinel-green);
+}
+
+/* ─── Button Glow ────────────────────────────────────────────── */
+.btn-sentinel {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(0, 255, 157, 0.15), rgba(0, 229, 255, 0.1));
+  border: 1px solid rgba(0, 255, 157, 0.4);
+  color: var(--sentinel-green);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.btn-sentinel:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(0, 255, 157, 0.25), rgba(0, 229, 255, 0.15));
+  border-color: rgba(0, 255, 157, 0.7);
+  box-shadow: 0 0 40px rgba(0, 255, 157, 0.15), inset 0 0 20px rgba(0, 255, 157, 0.05);
+  transform: translateY(-1px);
+}
+
+.btn-sentinel:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-sentinel:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-sentinel::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(0, 255, 157, 0.1) 60deg,
+    transparent 120deg
+  );
+  animation: rotate 4s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.btn-sentinel:hover::before {
+  opacity: 1;
+}
+
+@keyframes rotate {
+  100% { transform: rotate(360deg); }
+}
+
+/* ─── Noise Texture ──────────────────────────────────────────── */
+.noise::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* ─── Badge Pulse ────────────────────────────────────────────── */
+.badge-pulse {
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(0, 255, 157, 0); }
+}
+
+/* ─── Status Indicator ───────────────────────────────────────── */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.idle { background: #475569; }
+.status-dot.running { background: var(--sentinel-amber); animation: pulseGlow 1s ease-in-out infinite; }
+.status-dot.success { background: var(--sentinel-green); }
+.status-dot.error { background: var(--sentinel-red); }
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@keyframes scanLine {
+  0% { transform: translateY(-100vh); }
+  100% { transform: translateY(100vh); }
+}
+
+/* ─── Input Focus Glow ───────────────────────────────────────── */
+.input-sentinel {
+  background: rgba(10, 14, 23, 0.8);
+  border: 1px solid rgba(30, 41, 59, 0.8);
+  color: #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.input-sentinel:focus {
+  border-color: rgba(0, 255, 157, 0.5);
+  box-shadow: 0 0 20px rgba(0, 255, 157, 0.08);
+  outline: none;
+}
+
+.input-sentinel::placeholder {
+  color: #475569;
+}
