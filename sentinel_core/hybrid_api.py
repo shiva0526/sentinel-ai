@@ -22,6 +22,7 @@ import git  # GitPython
 from sentinel_core.scanner import SentinelScanner
 from sentinel_core.ast_manager import extract_function, inject_patch
 from sentinel_core.git_manager import SentinelGitManager
+from sentinel_core.notifier import send_email
 
 # ── LangGraph Adversarial Pipeline ───────────────────────────────────────
 # Add the orchestrator directory to sys.path so graph.py's local imports
@@ -86,6 +87,13 @@ def scan_and_fix_repo(request: RepoScanRequest):
     """
 
     # ── 0. Setup GitManager & Prepare Local Repo ─────────────────────
+    
+    # Notify pipeline started
+    send_email(
+        subject=f"SentinelAI Pipeline Initiated: {request.repo_path}",
+        html_body=f"<h2>SentinelAI Pipeline Started</h2><p>The Purple Team orchestration engine has started processing the repository: <b>{request.repo_path}</b>.</p><p>You will be notified once the remediation is complete.</p>"
+    )
+    
     gm = SentinelGitManager()
 
     if request.repo_path.startswith("http"):
@@ -211,6 +219,12 @@ def scan_and_fix_repo(request: RepoScanRequest):
 
     # ── 6. Response ──────────────────────────────────────────────────
     print("\n[Pipeline] Done -- returning results.\n")
+
+    # Notify pipeline completed
+    send_email(
+        subject=f"SentinelAI Remediation Complete: {function_name}",
+        html_body=f"<h2>Threat Neutralized</h2><p>SentinelAI successfully isolated and patched the vulnerable function <b>{function_name}</b>.</p><p>Detected Threat: {detected_threat}</p><p>GitOps PR: <a href='{pr_url}'>{pr_url}</a></p>"
+    )
 
     return {
         "status": "FIXED",

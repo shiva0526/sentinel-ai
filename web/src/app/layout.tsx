@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ZEROGATE / SENTINEL-AI WAR ROOM",
+  title: "SENTINEL-AI",
   description:
     "Purple Team DevSecOps Command Center — Real-time vulnerability scanning, adversarial simulation, and autonomous patching.",
 };
